@@ -4,11 +4,10 @@
 
 `vkfft-rs` is a binding for [VkFFT](https://github.com/DTolm/VkFFT) that assumes usage with [vulkano](https://vulkano.rs/). While VkFFT, despite the name, supports multiple backends, this wrapper requires usage with Vulkan.
 
-While `vkfft-rs` attempts to maintain a safe API, it's very likely there are some safe functions in this codebase that can still cause unsafe behavior. VkFFT's API and associated data structures are extremely unsafe and stateful, which presents difficulties in ensuring Rust's safety guarantees. Until its safety properties can be properly verified it is recommend to proceed with caution. PRs welcome!
+While `vkfft-rs` attempts to maintain a safe API, it's very likely there are some safe functions in this codebase that can still cause unsafe behavior. VkFFT's API and associated data structures are unsafe and stateful, which presents difficulties in ensuring Rust's safety guarantees. Until its safety properties can be properly verified it is recommend to proceed with caution. PRs welcome!
 
 ## Building
 
-Clone VkFFT:
 ```.sh
 # Clone VkFFT
 git clone https://github.com/DTolm/VkFFT.git
