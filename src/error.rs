@@ -81,7 +81,7 @@ pub enum Error {
   FailedToReleaseCommandQueue,
   FailedToEnumerateDevices,
   Config(ConfigError),
-  Launch(LaunchError)
+  Launch(LaunchError),
 }
 
 impl TryFrom<vkfft_sys::VkFFTResult> for Error {

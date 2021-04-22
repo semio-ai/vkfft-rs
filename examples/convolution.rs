@@ -8,13 +8,11 @@ use vulkano::command_buffer::{
   Kind,
 };
 
-
 use vulkano::instance::{Instance, InstanceExtensions};
 
 use std::{error::Error, sync::Arc};
 
-
-use util::Context;
+use util::{Context, SizeIterator, MatrixFormatter};
 
 const DEFAULT_BUFFER_USAGE: BufferUsage = BufferUsage {
   storage_buffer: true,
@@ -22,6 +20,9 @@ const DEFAULT_BUFFER_USAGE: BufferUsage = BufferUsage {
   transfer_destination: true,
   ..BufferUsage::none()
 };
+
+
+
 
 /// Transform a kernel from spatial data to frequency data
 pub fn transform_kernel(
@@ -42,12 +43,11 @@ pub fn transform_kernel(
     .kernel_convolution()
     .normalize()
     .coordinate_features(coordinate_features)
-    .batch_count(batch_count)
+    .batch_count(1)
     .r2c()
     .disable_reorder_four_step()
     .dim(&size)
     .build()?;
-
 
   // Allocate a command buffer
   let primary_cmd_buffer = context.alloc_primary_cmd_buffer()?;
@@ -57,9 +57,7 @@ pub fn transform_kernel(
     unsafe { UnsafeCommandBufferBuilder::new(&primary_cmd_buffer, Kind::primary(), Flags::None)? };
 
   // Configure FFT launch parameters
-  let mut params = LaunchParams::builder()
-    .command_buffer(&builder)
-    .build()?;
+  let mut params = LaunchParams::builder().command_buffer(&builder).build()?;
 
   // Construct FFT "Application"
   let mut app = App::new(config)?;
@@ -68,8 +66,8 @@ pub fn transform_kernel(
   app.forward(&mut params)?;
 
   // Dispatch command buffer and wait for completion
-  let command_buffer = builder.build()?;
-  context.submit(command_buffer)?;
+  // let command_buffer = builder.build()?;
+  // context.submit(command_buffer)?;
 
   Ok(())
 }
@@ -80,13 +78,42 @@ pub fn convolve(
   size: &[u32; 2],
   kernel: &Arc<CpuAccessibleBuffer<[f32]>>,
 ) -> Result<(), Box<dyn Error>> {
+  let input_buffer_size = coordinate_features * 2 * (size[0] / 2 + 1) * size[1];
+  let buffer_size = coordinate_features * 2 * (size[0] / 2 + 1) * size[1];
+
+  let input_buffer = CpuAccessibleBuffer::from_iter(
+    context.device.clone(),
+    DEFAULT_BUFFER_USAGE,
+    false,
+    (0..input_buffer_size).map(|_| 0.0f32),
+  )?;
+
+  let buffer = CpuAccessibleBuffer::from_iter(
+    context.device.clone(),
+    DEFAULT_BUFFER_USAGE,
+    false,
+    (0..buffer_size).map(|_| 0.0f32),
+  )?;
+
+  {
+    let mut buffer = input_buffer.write()?;
+
+    for v in 0..coordinate_features {
+      for [j, i] in SizeIterator::new(size) {
+        let _0 = i + j * (size[0] / 2) + v * (size[0] / 2) * size[1];
+        buffer[_0 as usize] = 1.0f32;
+      }
+    }
+  }
+
   // Configure kernel FFT
-  let config = Config::builder()
+  let conv_config = Config::builder()
     .physical_device(context.physical)
     .device(context.device.clone())
     .fence(&context.fence)
     .queue(context.queue.clone())
-    .buffer(kernel.clone())
+    .input_buffer(input_buffer)
+    .buffer(buffer.clone())
     .command_pool(context.pool.clone())
     .convolution()
     .kernel(kernel.clone())
@@ -98,7 +125,6 @@ pub fn convolve(
     .dim(&size)
     .build()?;
 
-
   // Allocate a command buffer
   let primary_cmd_buffer = context.alloc_primary_cmd_buffer()?;
 
@@ -107,12 +133,10 @@ pub fn convolve(
     unsafe { UnsafeCommandBufferBuilder::new(&primary_cmd_buffer, Kind::primary(), Flags::None)? };
 
   // Configure FFT launch parameters
-  let mut params = LaunchParams::builder()
-    .command_buffer(&builder)
-    .build()?;
+  let mut params = LaunchParams::builder().command_buffer(&builder).build()?;
 
   // Construct FFT "Application"
-  let mut app = App::new(config)?;
+  let mut app = App::new(conv_config)?;
 
   // Run forward FFT
   app.forward(&mut params)?;
@@ -120,6 +144,10 @@ pub fn convolve(
   // Dispatch command buffer and wait for completion
   let command_buffer = builder.build()?;
   context.submit(command_buffer)?;
+
+  println!("Result:");
+  println!("{}", MatrixFormatter::new(size, &buffer));
+  println!();
 
   Ok(())
 }
@@ -153,20 +181,34 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
   {
     let mut kernel_input = kernel.write()?;
+
+    let mut range = size;
+    range[0] = range[0] / 2 + 1;
+
     for f in 0..batch_count {
       for v in 0..coordinate_features {
-        for j in 0..size[1] {
-          for i in 0..size[0] / 2 {
-            let _0 = 2 * i + j * (size[0] + 2) + 0 * (size[0] + 2) * size[1] + v * (size[0] + 2) * size[1] + f * coordinate_features * (size[0] + 2) * size[1];
-            let _1 = 2 * i + 1 + j * (size[0] + 2) + 0 * (size[0] + 2) * size[1] + v * (size[0] + 2) * size[1] + f * coordinate_features * (size[0] + 2) * size[1];
-            kernel_input[_0 as usize] = (f * coordinate_features + v + 1) as f32;
-            kernel_input[_1 as usize] = 0.0f32;
-          }
+        for [i, j] in SizeIterator::new(&range) {
+          println!("{} {}", i, j);
+          let _0 = 2 * i
+            + j * (size[0] + 2)
+            + v * (size[0] + 2) * size[1]
+            + f * coordinate_features * (size[0] + 2) * size[1];
+          let _1 = 2 * i
+            + 1
+            + j * (size[0] + 2)
+            + v * (size[0] + 2) * size[1]
+            + f * coordinate_features * (size[0] + 2) * size[1];
+          kernel_input[_0 as usize] = (f * coordinate_features + v + 1) as f32;
+          kernel_input[_1 as usize] = 0.0f32;
         }
       }
     }
   }
-  
+
+  println!("Kernel:");
+  println!("{}", &MatrixFormatter::new(&size, &kernel));
+  println!();
+
 
   transform_kernel(
     &mut context,
@@ -175,6 +217,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     &size,
     &kernel,
   )?;
+
+  println!("Transformed Kernel:");
+  println!("{}", &MatrixFormatter::new(&size, &kernel));
+  println!();
+
+  convolve(&mut context, coordinate_features, &size, &kernel)?;
 
   Ok(())
 }

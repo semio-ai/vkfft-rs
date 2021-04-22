@@ -51,7 +51,7 @@ pub struct ConfigBuilder<'a> {
   use_lut: bool,
   symmetric_kernel: bool,
   input_formatted: Option<bool>,
-  output_formatted: Option<bool>
+  output_formatted: Option<bool>,
 }
 
 impl<'a> ConfigBuilder<'a> {
@@ -83,7 +83,7 @@ impl<'a> ConfigBuilder<'a> {
       symmetric_kernel: false,
       input_formatted: None,
       output_formatted: None,
-      kernel: None
+      kernel: None,
     }
   }
 
@@ -131,7 +131,7 @@ impl<'a> ConfigBuilder<'a> {
 
   pub fn buffer<B>(mut self, buffer: B) -> Self
   where
-    B: Into<BufferDesc>
+    B: Into<BufferDesc>,
   {
     self.buffer = Some(buffer.into());
     self
@@ -139,7 +139,7 @@ impl<'a> ConfigBuilder<'a> {
 
   pub fn temp_buffer<B>(mut self, temp_buffer: B) -> Self
   where
-    B: Into<BufferDesc>
+    B: Into<BufferDesc>,
   {
     self.temp_buffer = Some(temp_buffer.into());
     self
@@ -147,7 +147,7 @@ impl<'a> ConfigBuilder<'a> {
 
   pub fn input_buffer<B>(mut self, input_buffer: B) -> Self
   where
-    B: Into<BufferDesc>
+    B: Into<BufferDesc>,
   {
     self.input_buffer = Some(input_buffer.into());
     self
@@ -155,7 +155,7 @@ impl<'a> ConfigBuilder<'a> {
 
   pub fn output_buffer<B>(mut self, output_buffer: B) -> Self
   where
-    B: Into<BufferDesc>
+    B: Into<BufferDesc>,
   {
     self.output_buffer = Some(output_buffer.into());
     self
@@ -163,7 +163,7 @@ impl<'a> ConfigBuilder<'a> {
 
   pub fn kernel<B>(mut self, kernel: B) -> Self
   where
-    B: Into<BufferDesc>
+    B: Into<BufferDesc>,
   {
     self.kernel = Some(kernel.into());
     self
@@ -325,7 +325,7 @@ impl<'a> ConfigBuilder<'a> {
       kernel: self.kernel,
       temp_buffer: self.temp_buffer,
       input_buffer: self.input_buffer,
-      output_buffer: self.output_buffer
+      output_buffer: self.output_buffer,
     })
   }
 }
@@ -344,12 +344,12 @@ pub enum Precision {
 
 pub enum BufferDesc {
   Buffer(Arc<dyn BufferAccess>),
-  BufferSize(usize)
+  BufferSize(usize),
 }
 
 impl<T> From<Arc<T>> for BufferDesc
 where
-  T: 'static + BufferAccess
+  T: 'static + BufferAccess,
 {
   fn from(value: Arc<T>) -> Self {
     Self::Buffer(value as Arc<dyn BufferAccess>)
@@ -396,9 +396,9 @@ pub struct Config<'a> {
   pub command_pool: Arc<UnsafeCommandPool>,
 
   pub buffer: Option<BufferDesc>,
-  
+
   pub input_buffer: Option<BufferDesc>,
-  
+
   pub output_buffer: Option<BufferDesc>,
 
   pub temp_buffer: Option<BufferDesc>,

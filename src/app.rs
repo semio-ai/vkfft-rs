@@ -1,9 +1,7 @@
 use std::sync::Arc;
 
 use error::check_error;
-use vulkano::{
-  buffer::BufferAccess, VulkanHandle, VulkanObject,
-};
+use vulkano::{buffer::BufferAccess, VulkanHandle, VulkanObject};
 
 use crate::{
   config::{Config, ConfigGuard},
@@ -35,7 +33,6 @@ pub enum LaunchError {
   ConfigSpecifiesOutputBuffer,
   ConfigSpecifiesKernel,
 }
-
 
 pub struct LaunchParamsBuilder {
   command_buffer: Option<vk::CommandBuffer>,

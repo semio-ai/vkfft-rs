@@ -1,11 +1,11 @@
-use vulkano::command_buffer::pool::{UnsafeCommandPool, UnsafeCommandPoolAlloc};
+use vulkano::{buffer::{BufferAccess, CpuAccessibleBuffer}, command_buffer::pool::{UnsafeCommandPool, UnsafeCommandPoolAlloc}};
 use vulkano::command_buffer::{submit::SubmitCommandBufferBuilder, sys::UnsafeCommandBuffer};
 use vulkano::device::{Device, DeviceExtensions, Features, Queue};
 use vulkano::instance::debug::{DebugCallback, Message, MessageSeverity, MessageType};
 use vulkano::instance::{Instance, PhysicalDevice};
 use vulkano::sync::Fence;
 
-use std::{error::Error, sync::Arc};
+use std::{error::Error, fmt::{Display, Formatter}, sync::Arc};
 
 const MESSAGE_SEVERITIES: MessageSeverity = MessageSeverity {
   error: true,
@@ -147,5 +147,104 @@ impl<'a> Context<'a> {
 
   pub fn alloc_secondary_cmd_buffer(&self) -> Result<UnsafeCommandPoolAlloc, Box<dyn Error>> {
     self.alloc_cmd_buffer(true)
+  }
+}
+
+pub struct SizeIterator<'a> {
+  size: &'a [u32; 2],
+  pos: [u32; 2],
+  total: u32,
+  iter: u32
+}
+
+impl<'a> SizeIterator<'a> {
+  pub fn new(size: &'a [u32; 2]) -> Self {
+    let total = size.iter().cloned().reduce(|a, b| a * b).unwrap();
+    Self { size, pos: [0; 2], total, iter: 0 }
+  }
+}
+
+impl<'a> Iterator for SizeIterator<'a> {
+  type Item = [u32; 2];
+
+  fn next(&mut self) -> Option<Self::Item> {
+    if self.iter >= self.total - 1 {
+      return None;
+    }
+
+    let ret = Some([self.iter % self.size[0], self.iter / self.size[0]]);
+    
+    self.iter += 1;
+    
+    ret
+  }
+}
+
+pub trait Digits {
+  fn digits(&self) -> usize;
+}
+
+impl Digits for i64 {
+  fn digits(&self) -> usize {
+    let mut this = *self;
+    let mut ret = 1;
+    while this / 10 != 0 {
+      ret += 1;
+      this /= 10;
+    }
+    ret
+  }
+}
+
+pub struct MatrixFormatter<'a> {
+  size: &'a [u32; 2],
+  data: &'a Arc<CpuAccessibleBuffer<[f32]>>
+}
+
+impl<'a> MatrixFormatter<'a> {
+  pub fn new(size: &'a [u32; 2], data: &'a Arc<CpuAccessibleBuffer<[f32]>>) -> Self {
+    Self {
+      size,
+      data
+    }
+  }
+}
+
+impl<'a> Display for MatrixFormatter<'a>
+{
+  fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    let data = self.data.read().unwrap();
+    for j in 0..self.size[1] {
+      for i in 0..self.size[0] {
+        let value = data[(j * self.size[0] + i) as usize];
+        if value >= 0.0f32 {
+          write!(f, " ")?;
+        }
+
+        let spaces = 3 - (value.floor() as i64).digits();
+        for _ in 0..spaces {
+          write!(f, " ")?;
+        }
+
+        write!(f, "{:.1}", value)?;
+      }
+      writeln!(f)?;
+    }
+
+    Ok(())
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn check_digits() {
+    assert_eq!(100i64.digits(), 3);
+    assert_eq!(1000i64.digits(), 4);
+    assert_eq!((-1000i64).digits(), 4);
+    assert_eq!((-1i64).digits(), 1);
+    assert_eq!(0i64.digits(), 1);
   }
 }
