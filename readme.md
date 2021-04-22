@@ -8,7 +8,6 @@ While `vkfft-rs` attempts to maintain a safe API, it's very likely there are som
 
 ## Building
 
-Clone VkFFT:
 ```.sh
 # Clone VkFFT
 git clone https://github.com/DTolm/VkFFT.git
