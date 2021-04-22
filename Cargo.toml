@@ -1,0 +1,18 @@
+[package]
+name = "vkfft"
+version = "0.1.0"
+authors = ["Semio AI, Inc."]
+edition = "2018"
+resolver = "2"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+vkfft-sys = { path = "./crates/vkfft-sys" }
+vulkano = "0.22"
+derive_more = "0.99"
+vk-sys = "0.6"
+
+[dev-dependencies]
+util = { path = "./crates/util" }
+smallvec = "1.6"
