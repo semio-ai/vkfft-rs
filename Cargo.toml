@@ -10,7 +10,7 @@ description = "Rust bindings for VkFFT"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-vkfft-sys = { path = "./crates/vkfft-sys" }
+vkfft-sys = { path = "./crates/vkfft-sys", version = "0.1" }
 vulkano = "0.22"
 derive_more = "0.99"
 vk-sys = "0.6"
