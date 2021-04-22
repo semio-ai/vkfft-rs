@@ -1,9 +1,9 @@
 [package]
 name = "vkfft-sys"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Semio AI, Inc."]
 edition = "2018"
-license-file = "LICENSE"
+license = "BSD-3-Clause"
 description = "Rust bindings for VkFFT"
 
 
