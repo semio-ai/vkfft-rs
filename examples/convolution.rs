@@ -64,10 +64,11 @@ pub fn transform_kernel(
 
   // Run forward FFT
   app.forward(&mut params)?;
+  // app.inverse(&mut params)?;
 
   // Dispatch command buffer and wait for completion
-  // let command_buffer = builder.build()?;
-  // context.submit(command_buffer)?;
+  let command_buffer = builder.build()?;
+  context.submit(command_buffer)?;
 
   Ok(())
 }
@@ -99,12 +100,16 @@ pub fn convolve(
     let mut buffer = input_buffer.write()?;
 
     for v in 0..coordinate_features {
-      for [j, i] in SizeIterator::new(size) {
+      for [i, j] in SizeIterator::new(size) {
         let _0 = i + j * (size[0] / 2) + v * (size[0] / 2) * size[1];
         buffer[_0 as usize] = 1.0f32;
       }
     }
   }
+
+  println!("Buffer:");
+  println!("{}", MatrixFormatter::new(size, &input_buffer));
+  println!();
 
   // Configure kernel FFT
   let conv_config = Config::builder()
@@ -122,6 +127,7 @@ pub fn convolve(
     .batch_count(1)
     .r2c()
     .disable_reorder_four_step()
+    .input_formatted(true)
     .dim(&size)
     .build()?;
 

@@ -396,13 +396,9 @@ pub struct Config<'a> {
   pub command_pool: Arc<UnsafeCommandPool>,
 
   pub buffer: Option<BufferDesc>,
-
   pub input_buffer: Option<BufferDesc>,
-
   pub output_buffer: Option<BufferDesc>,
-
   pub temp_buffer: Option<BufferDesc>,
-
   pub kernel: Option<BufferDesc>,
 
   /// Normalize inverse transform
@@ -459,8 +455,21 @@ pub enum ConfigError {
   InvalidConfig,
 }
 
+pub(crate) struct KeepAlive {
+  pub device: Arc<Device>,
+  pub queue: Arc<Queue>,
+  pub command_pool: Arc<UnsafeCommandPool>,
+
+  pub buffer: Option<Arc<dyn BufferAccess>>,
+  pub input_buffer: Option<Arc<dyn BufferAccess>>,
+  pub output_buffer: Option<Arc<dyn BufferAccess>>,
+  pub temp_buffer: Option<Arc<dyn BufferAccess>>,
+  pub kernel: Option<Arc<dyn BufferAccess>>,
+}
+
 #[repr(C)]
 pub(crate) struct ConfigGuard {
+  pub(crate) keep_alive: KeepAlive,
   pub(crate) config: vkfft_sys::VkFFTConfiguration,
   pub(crate) physical_device: vk_sys::PhysicalDevice,
   pub(crate) device: vk_sys::Device,
@@ -540,7 +549,19 @@ impl<'a> Config<'a> {
     use std::mem::{transmute, zeroed};
 
     unsafe {
+      let keep_alive = KeepAlive {
+        device: self.device.clone(),
+        buffer: self.buffer.as_ref().map(|b| b.as_buffer().cloned()).flatten(),
+        input_buffer: self.input_buffer.as_ref().map(|b| b.as_buffer().cloned()).flatten(),
+        output_buffer: self.output_buffer.as_ref().map(|b| b.as_buffer().cloned()).flatten(),
+        kernel: self.kernel.as_ref().map(|b| b.as_buffer().cloned()).flatten(),
+        command_pool: self.command_pool.clone(),
+        queue: self.queue.clone(),
+        temp_buffer: self.temp_buffer.as_ref().map(|b| b.as_buffer().cloned()).flatten()
+      };
+
       let mut res = Box::pin(ConfigGuard {
+        keep_alive, 
         config: zeroed(),
         physical_device: self.physical_device.internal_object(),
         device: self.device.internal_object().value() as usize,
@@ -600,6 +621,7 @@ impl<'a> Config<'a> {
       }
 
       if let Some(t) = &res.kernel {
+        println!("K: {:#0x}", t);
         res.config.kernel = transmute(t);
       }
 
@@ -609,6 +631,7 @@ impl<'a> Config<'a> {
       }
 
       if let Some(t) = &res.buffer {
+        println!("B: {:#0x}", *t);
         res.config.buffer = transmute(t);
       }
 
@@ -618,6 +641,7 @@ impl<'a> Config<'a> {
       }
 
       if let Some(t) = &res.temp_buffer {
+        println!("T: {:#0x}", *t);
         res.config.tempBuffer = transmute(t);
       }
 
@@ -627,15 +651,18 @@ impl<'a> Config<'a> {
       }
 
       if let Some(t) = &res.input_buffer {
+        println!("I: {:#0x}", *t);
         res.config.inputBuffer = transmute(t);
       }
 
       if res.output_buffer_size != 0 {
         res.config.outputBufferNum = 1;
         res.config.outputBufferSize = transmute(addr_of_mut!(res.output_buffer_size));
+
       }
 
       if let Some(t) = &res.output_buffer {
+        println!("O: {:#0x}", *t);
         res.config.outputBuffer = transmute(t);
       }
 

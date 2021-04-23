@@ -246,5 +246,6 @@ mod tests {
     assert_eq!((-1000i64).digits(), 4);
     assert_eq!((-1i64).digits(), 1);
     assert_eq!(0i64.digits(), 1);
+    assert_eq!((-9.6f32.floor() as i64).digits(), 1)
   }
 }
