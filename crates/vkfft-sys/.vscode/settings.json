@@ -1,7 +1,7 @@
 {
   "C_Cpp.default.includePath": [
     "${env:VKFFT_ROOT}/vkFFT",
-    "${env:VKFFT_ROOT}/glslang-master/glslang/Include",
+    "${env:VKFFT_ROOT}/glslang-main/glslang/Include",
   ],
   "C_Cpp.default.defines": [
     "VKFFT_BACKEND=0"

@@ -605,8 +605,8 @@ impl<'a> Config<'a> {
           .map(|b| b.inner().buffer.internal_object().value()),
       });
 
-      res.config.FFTdim = self.fft_dim;
-      res.config.size = self.size;
+      res.config.FFTdim = self.fft_dim as u64;
+      res.config.size = self.size.map(u64::from);
 
       res.config.physicalDevice = transmute(addr_of_mut!(res.physical_device));
       res.config.device = transmute(addr_of_mut!(res.device));
@@ -670,12 +670,12 @@ impl<'a> Config<'a> {
       res.config.performZeropadding[1] = self.zero_padding[1].into();
       res.config.performZeropadding[2] = self.zero_padding[2].into();
 
-      res.config.fft_zeropad_left = self.zeropad_left;
-      res.config.fft_zeropad_right = self.zeropad_right;
+      res.config.fft_zeropad_left = self.zeropad_left.map(u64::from);
+      res.config.fft_zeropad_right = self.zeropad_right.map(u64::from);
 
       res.config.kernelConvolution = self.kernel_convolution.into();
       res.config.performR2C = self.r2c.into();
-      res.config.coordinateFeatures = self.coordinate_features;
+      res.config.coordinateFeatures = self.coordinate_features as u64;
       res.config.disableReorderFourStep = self.disable_reorder_four_step.into();
 
       res.config.symmetricKernel = self.symmetric_kernel.into();
@@ -711,7 +711,7 @@ impl<'a> Config<'a> {
       }
 
       if let Some(batch_count) = &self.batch_count {
-        res.config.numberBatches = *batch_count;
+        res.config.numberBatches = *batch_count as u64;
       }
 
       Ok(res)

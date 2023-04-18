@@ -114,10 +114,10 @@ fn main() -> Result<(), Box<dyn Error>> {
   let out_dir = PathBuf::from(out_dir);
 
   let library_dirs = [
-    format!("{}/build/glslang-master/glslang", vkfft_root),
-    format!("{}/build/glslang-master/glslang/OSDependent/Unix", vkfft_root),
-    format!("{}/build/glslang-master/glslang/OGLCompilersDLL", vkfft_root),
-    format!("{}/build/glslang-master/glslang/SPIRV", vkfft_root),
+    format!("{}/build/glslang-main/glslang", vkfft_root),
+    format!("{}/build/glslang-main/glslang/OSDependent/Unix", vkfft_root),
+    format!("{}/build/glslang-main/glslang/OGLCompilersDLL", vkfft_root),
+    format!("{}/build/glslang-main/SPIRV", vkfft_root),
   ];
 
   let libraries = [
@@ -144,7 +144,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
   let include_dirs = [
     format!("{}/vkFFT", &vkfft_root),
-    format!("{}/glslang-master/glslang/Include", vkfft_root)
+    format!("{}/glslang-main/glslang/Include", vkfft_root)
   ];
 
   let defines = [
