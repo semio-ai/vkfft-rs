@@ -33,8 +33,8 @@ pub fn version() -> Version {
   let ver = unsafe { vkfft_sys::VkFFTGetVersion() };
 
   Version {
-    major: ver / 10000,
-    minor: ver % 10000 / 100,
-    patch: ver % 100,
+    major: (ver / 10000) as u32,
+    minor: (ver % 10000 / 100) as u32,
+    patch: (ver % 100) as u32,
   }
 }

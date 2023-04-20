@@ -158,7 +158,7 @@ pub fn convolve(
   Ok(())
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<(), Box<dyn Error>> {
   println!("VkFFT version: {}", vkfft::version());
 
   let instance = Instance::new(
@@ -167,7 +167,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
       ext_debug_utils: true,
       ..InstanceExtensions::none()
     },
-    vec!["VK_LAYER_KHRONOS_validation"],
+    None,
   )?;
 
   let mut context = Context::new(&instance)?;
